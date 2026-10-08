@@ -1,0 +1,1477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Trip Organizer</title>
+
+<!-- Leaflet Map -->
+<link
+rel="stylesheet"
+href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+
+<style>
+
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  font-family:Arial,sans-serif;
+}
+
+body{
+  background:#f3f4f6;
+  color:#111827;
+}
+
+header{
+  background:#111827;
+  color:white;
+  padding:22px;
+  text-align:center;
+}
+
+header h1{
+  font-size:28px;
+}
+
+header p{
+  margin-top:6px;
+  opacity:.8;
+}
+
+.container{
+  max-width:900px;
+  margin:auto;
+  padding:20px;
+}
+
+.card{
+  background:white;
+  padding:20px;
+  margin-bottom:20px;
+  border-radius:16px;
+  box-shadow:0 3px 12px rgba(0,0,0,.08);
+}
+
+.card h2{
+  margin-bottom:18px;
+}
+
+label{
+  display:block;
+  margin-top:10px;
+  font-weight:bold;
+}
+
+input,
+textarea,
+button{
+  width:100%;
+  padding:13px;
+  margin-top:7px;
+  margin-bottom:12px;
+  border-radius:9px;
+  border:1px solid #d1d5db;
+  font-size:16px;
+}
+
+textarea{
+  min-height:100px;
+  resize:vertical;
+}
+
+button{
+  background:#2563eb;
+  color:white;
+  border:none;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+button:hover{
+  opacity:.9;
+}
+
+.green{
+  background:#16a34a;
+}
+
+.red{
+  background:#dc2626;
+}
+
+.orange{
+  background:#f59e0b;
+}
+
+.dark{
+  background:#111827;
+}
+
+
+/* Trip destination */
+
+.destination-box{
+  background:#eff6ff;
+  padding:15px;
+  border-radius:12px;
+  margin-top:10px;
+}
+
+.destination-box p{
+  margin:8px 0;
+}
+
+
+/* Route */
+
+.route-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:8px;
+}
+
+.route-number{
+  width:32px;
+  height:32px;
+  background:#2563eb;
+  color:white;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+
+.route-name{
+  flex:1;
+  background:#f3f4f6;
+  padding:12px;
+  border-radius:8px;
+}
+
+.route-buttons{
+  display:flex;
+  gap:5px;
+}
+
+.route-buttons button{
+  width:auto;
+  margin:0;
+  padding:8px 10px;
+}
+
+
+/* Money */
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-bottom:15px;
+}
+
+.stat{
+  padding:18px;
+  border-radius:12px;
+  text-align:center;
+  background:#eef2ff;
+}
+
+.stat h3{
+  font-size:14px;
+  margin-bottom:8px;
+}
+
+.stat p{
+  font-size:22px;
+  font-weight:bold;
+}
+
+
+/* Map */
+
+#map{
+  height:400px;
+  width:100%;
+  border-radius:14px;
+}
+
+
+/* Location */
+
+.location{
+  background:#ecfdf5;
+  padding:15px;
+  border-radius:10px;
+  margin-top:10px;
+}
+
+
+/* Expense */
+
+.expense-item{
+  display:flex;
+  justify-content:space-between;
+  padding:12px;
+  background:#f3f4f6;
+  border-radius:8px;
+  margin-bottom:8px;
+}
+
+
+/* Members */
+
+.member{
+  background:#f3f4f6;
+  padding:12px;
+  border-radius:8px;
+  margin-bottom:8px;
+}
+
+
+@media(max-width:600px){
+
+  .stats{
+    grid-template-columns:1fr;
+  }
+
+  .route-item{
+    flex-wrap:wrap;
+  }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<header>
+
+<h1>🌍 Trip Organizer</h1>
+
+<p>Plan • Track • Manage Your Trip</p>
+
+</header>
+
+
+<div class="container">
+
+
+<!-- =====================================
+     1. TRIP WHERE
+===================================== -->
+
+<div class="card">
+
+<h2>📍 Trip Where?</h2>
+
+<label>Starting Location</label>
+
+<input
+id="startLocation"
+type="text"
+placeholder="Example: Chennai"
+>
+
+<label>Destination</label>
+
+<input
+id="destination"
+type="text"
+placeholder="Example: Kodaikanal"
+>
+
+<button onclick="saveDestination()">
+Save Trip Location
+</button>
+
+
+<div
+id="destinationDisplay"
+class="destination-box"
+>
+
+Trip location not added yet.
+
+</div>
+
+</div>
+
+
+
+<!-- =====================================
+     2. TRIP DETAILS
+===================================== -->
+
+<div class="card">
+
+<h2>🧳 Trip Details</h2>
+
+<label>Trip Name</label>
+
+<input
+id="tripName"
+type="text"
+placeholder="Example: Tamil Nadu Trip"
+>
+
+
+<label>Trip Description</label>
+
+<textarea
+id="tripDescription"
+placeholder="Enter trip details..."
+></textarea>
+
+
+<h3>👥 Trip Members</h3>
+
+<input
+id="memberName"
+type="text"
+placeholder="Member name"
+>
+
+<button onclick="addMember()">
+➕ Add Member
+</button>
+
+<div id="members"></div>
+
+</div>
+
+
+
+<!-- =====================================
+     3. TRIP ROUTE
+===================================== -->
+
+<div class="card">
+
+<h2>🛣️ Trip Route</h2>
+
+<p style="margin-bottom:15px;">
+Add, edit or remove places in your route.
+</p>
+
+<div id="routeList"></div>
+
+
+<button onclick="addRoutePlace()">
+➕ Add Route Place
+</button>
+
+
+<button
+onclick="changeCompleteRoute()"
+class="green"
+>
+✏️ Change Complete Route
+</button>
+
+</div>
+
+
+
+<!-- =====================================
+     4. DATE & TIME
+===================================== -->
+
+<div class="card">
+
+<h2>📅 Trip Date & Timing</h2>
+
+
+<label>Trip Start Date</label>
+
+<input
+id="startDate"
+type="date"
+>
+
+
+<label>Trip Start Time</label>
+
+<input
+id="startTime"
+type="time"
+>
+
+
+<label>Trip End Date</label>
+
+<input
+id="endDate"
+type="date"
+>
+
+
+<label>Trip End Time</label>
+
+<input
+id="endTime"
+type="time"
+>
+
+
+<button onclick="saveTripTiming()">
+💾 Save Trip Timing
+</button>
+
+
+<div
+id="timingDisplay"
+class="destination-box"
+>
+
+Trip timing not added yet.
+
+</div>
+
+</div>
+
+
+
+<!-- =====================================
+     5. MONEY
+===================================== -->
+
+<div class="card">
+
+<h2>💰 Income & Expenses</h2>
+
+
+<div class="stats">
+
+<div class="stat">
+
+<h3>Income</h3>
+
+<p>
+₹<span id="income">0</span>
+</p>
+
+</div>
+
+
+<div class="stat">
+
+<h3>Expenses</h3>
+
+<p>
+₹<span id="expenseTotal">0</span>
+</p>
+
+</div>
+
+
+<div class="stat">
+
+<h3>Balance</h3>
+
+<p>
+₹<span id="balance">0</span>
+</p>
+
+</div>
+
+</div>
+
+
+<label>Amount</label>
+
+<input
+id="moneyAmount"
+type="number"
+placeholder="Enter amount"
+>
+
+
+<label>Description</label>
+
+<input
+id="moneyDescription"
+type="text"
+placeholder="Example: Hotel"
+>
+
+
+<button onclick="addIncome()">
+➕ Add Income
+</button>
+
+
+<button
+onclick="addExpense()"
+class="red"
+>
+➖ Add Expense
+</button>
+
+
+<h3 style="margin-top:15px;">
+Transactions
+</h3>
+
+<div id="transactions">
+
+No transactions yet.
+
+</div>
+
+</div>
+
+
+
+<!-- =====================================
+     6. LIVE LOCATION
+===================================== -->
+
+<div class="card">
+
+<h2>📡 Live Location</h2>
+
+<p>
+Allow location permission to find your current position.
+</p>
+
+
+<button onclick="getLiveLocation()">
+📍 Get My Current Location
+</button>
+
+
+<div
+id="locationStatus"
+class="location"
+>
+
+Location not detected yet.
+
+</div>
+
+</div>
+
+
+
+<!-- =====================================
+     7. ROUTE MAP
+===================================== -->
+
+<div class="card">
+
+<h2>🗺️ En Route Mapping</h2>
+
+<p style="margin-bottom:15px;">
+Your current location and trip route will appear on the map.
+</p>
+
+
+<div id="map"></div>
+
+
+<button
+onclick="showRouteOnMap()"
+style="margin-top:15px;"
+>
+🛣️ Show Trip Route
+</button>
+
+</div>
+
+
+</div>
+
+
+
+<!-- Leaflet JS -->
+
+<script
+src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
+
+
+<script>
+
+
+/* =====================================
+   DATA
+===================================== */
+
+let routePlaces = [
+  "Chennai",
+  "Pondicherry",
+  "Thanjavur",
+  "Kodaikanal"
+];
+
+let members = [];
+
+let income = 0;
+
+let expenses = 0;
+
+let transactions = [];
+
+let currentLocation = null;
+
+let map;
+
+let routeLine;
+
+let locationMarker;
+
+
+
+/* =====================================
+   1. TRIP LOCATION
+===================================== */
+
+function saveDestination(){
+
+  let start =
+    document.getElementById("startLocation").value.trim();
+
+  let destination =
+    document.getElementById("destination").value.trim();
+
+
+  if(!start || !destination){
+
+    alert("Please enter starting location and destination.");
+
+    return;
+  }
+
+
+  document.getElementById(
+    "destinationDisplay"
+  ).innerHTML =
+
+    "<b>🏁 Start:</b> " + start +
+    "<br><br>" +
+    "<b>🏁 Destination:</b> " + destination;
+
+
+  routePlaces[0] = start;
+
+  routePlaces[routePlaces.length - 1] =
+    destination;
+
+
+  displayRoute();
+
+}
+
+
+
+/* =====================================
+   2. MEMBERS
+===================================== */
+
+function addMember(){
+
+  let name =
+    document.getElementById("memberName")
+    .value
+    .trim();
+
+
+  if(!name){
+
+    alert("Enter member name.");
+
+    return;
+  }
+
+
+  members.push(name);
+
+  displayMembers();
+
+
+  document.getElementById(
+    "memberName"
+  ).value = "";
+
+}
+
+
+function displayMembers(){
+
+  let box =
+    document.getElementById("members");
+
+
+  box.innerHTML = "";
+
+
+  members.forEach(function(name,index){
+
+    let div =
+      document.createElement("div");
+
+
+    div.className = "member";
+
+
+    div.innerHTML =
+      "👤 " +
+      (index + 1) +
+      ". " +
+      name;
+
+
+    box.appendChild(div);
+
+  });
+
+}
+
+
+
+/* =====================================
+   3. ROUTE
+===================================== */
+
+function displayRoute(){
+
+  let list =
+    document.getElementById("routeList");
+
+
+  list.innerHTML = "";
+
+
+  routePlaces.forEach(function(place,index){
+
+    let item =
+      document.createElement("div");
+
+
+    item.className =
+      "route-item";
+
+
+    item.innerHTML =
+
+      '<div class="route-number">' +
+      (index + 1) +
+      '</div>' +
+
+      '<div class="route-name">' +
+      (index === 0 ? "🏁 " : "📍 ") +
+      place +
+      '</div>' +
+
+      '<div class="route-buttons">' +
+
+      '<button ' +
+      'class="orange" ' +
+      'onclick="editRoutePlace(' +
+      index +
+      ')">✏️</button>' +
+
+      '<button ' +
+      'class="red" ' +
+      'onclick="deleteRoutePlace(' +
+      index +
+      ')">❌</button>' +
+
+      '</div>';
+
+
+    list.appendChild(item);
+
+  });
+
+}
+
+
+
+/* Add route place */
+
+function addRoutePlace(){
+
+  let place =
+    prompt("Enter route place:");
+
+
+  if(place === null){
+    return;
+  }
+
+
+  place = place.trim();
+
+
+  if(place === ""){
+
+    alert("Please enter a place.");
+
+    return;
+  }
+
+
+  routePlaces.push(place);
+
+
+  displayRoute();
+
+}
+
+
+
+/* Edit route place */
+
+function editRoutePlace(index){
+
+  let newPlace =
+    prompt(
+      "Change route place:",
+      routePlaces[index]
+    );
+
+
+  if(newPlace === null){
+    return;
+  }
+
+
+  newPlace = newPlace.trim();
+
+
+  if(newPlace === ""){
+
+    alert("Place cannot be empty.");
+
+    return;
+  }
+
+
+  routePlaces[index] = newPlace;
+
+
+  displayRoute();
+
+}
+
+
+
+/* Delete route place */
+
+function deleteRoutePlace(index){
+
+  if(routePlaces.length <= 2){
+
+    alert(
+      "Route must contain at least 2 places."
+    );
+
+    return;
+  }
+
+
+  let answer =
+    confirm(
+      "Remove " +
+      routePlaces[index] +
+      " from route?"
+    );
+
+
+  if(answer){
+
+    routePlaces.splice(index,1);
+
+    displayRoute();
+
+  }
+
+}
+
+
+
+/* Change complete route */
+
+function changeCompleteRoute(){
+
+  let route =
+    prompt(
+      "Enter route separated by commas:",
+      routePlaces.join(", ")
+    );
+
+
+  if(route === null){
+    return;
+  }
+
+
+  let places =
+    route.split(",")
+    .map(function(place){
+      return place.trim();
+    })
+    .filter(function(place){
+      return place !== "";
+    });
+
+
+  if(places.length < 2){
+
+    alert(
+      "Enter at least 2 places."
+    );
+
+    return;
+  }
+
+
+  routePlaces = places;
+
+
+  displayRoute();
+
+}
+
+
+
+/* =====================================
+   4. DATE & TIME
+===================================== */
+
+function saveTripTiming(){
+
+  let startDate =
+    document.getElementById("startDate").value;
+
+  let startTime =
+    document.getElementById("startTime").value;
+
+  let endDate =
+    document.getElementById("endDate").value;
+
+  let endTime =
+    document.getElementById("endTime").value;
+
+
+  if(
+    !startDate ||
+    !startTime ||
+    !endDate ||
+    !endTime
+  ){
+
+    alert(
+      "Please enter complete trip date and time."
+    );
+
+    return;
+  }
+
+
+  document.getElementById(
+    "timingDisplay"
+  ).innerHTML =
+
+    "<b>🚀 Start:</b> " +
+    startDate +
+    " " +
+    startTime +
+
+    "<br><br>" +
+
+    "<b>🏁 End:</b> " +
+    endDate +
+    " " +
+    endTime;
+
+}
+
+
+
+/* =====================================
+   5. MONEY
+===================================== */
+
+function addIncome(){
+
+  let amount =
+    Number(
+      document.getElementById("moneyAmount").value
+    );
+
+
+  let description =
+    document.getElementById(
+      "moneyDescription"
+    ).value.trim();
+
+
+  if(amount <= 0){
+
+    alert("Enter a valid amount.");
+
+    return;
+  }
+
+
+  income += amount;
+
+
+  transactions.push({
+
+    type:"Income",
+
+    amount:amount,
+
+    description:
+      description || "Income"
+
+  });
+
+
+  updateMoney();
+
+
+  clearMoneyInputs();
+
+}
+
+
+
+function addExpense(){
+
+  let amount =
+    Number(
+      document.getElementById("moneyAmount").value
+    );
+
+
+  let description =
+    document.getElementById(
+      "moneyDescription"
+    ).value.trim();
+
+
+  if(amount <= 0){
+
+    alert("Enter a valid amount.");
+
+    return;
+  }
+
+
+  expenses += amount;
+
+
+  transactions.push({
+
+    type:"Expense",
+
+    amount:amount,
+
+    description:
+      description || "Expense"
+
+  });
+
+
+  updateMoney();
+
+
+  clearMoneyInputs();
+
+}
+
+
+
+function updateMoney(){
+
+  document.getElementById(
+    "income"
+  ).innerText = income;
+
+
+  document.getElementById(
+    "expenseTotal"
+  ).innerText = expenses;
+
+
+  document.getElementById(
+    "balance"
+  ).innerText =
+    income - expenses;
+
+
+  displayTransactions();
+
+}
+
+
+
+function displayTransactions(){
+
+  let box =
+    document.getElementById(
+      "transactions"
+    );
+
+
+  if(transactions.length === 0){
+
+    box.innerHTML =
+      "No transactions yet.";
+
+    return;
+  }
+
+
+  box.innerHTML = "";
+
+
+  transactions.forEach(function(item){
+
+    let div =
+      document.createElement("div");
+
+
+    div.className =
+      "expense-item";
+
+
+    let symbol =
+      item.type === "Income"
+      ? "🟢"
+      : "🔴";
+
+
+    div.innerHTML =
+
+      "<span>" +
+      symbol +
+      " " +
+      item.description +
+      "</span>" +
+
+      "<b>₹" +
+      item.amount +
+      "</b>";
+
+
+    box.appendChild(div);
+
+  });
+
+}
+
+
+
+function clearMoneyInputs(){
+
+  document.getElementById(
+    "moneyAmount"
+  ).value = "";
+
+
+  document.getElementById(
+    "moneyDescription"
+  ).value = "";
+
+}
+
+
+
+/* =====================================
+   6. MAP
+===================================== */
+
+function initializeMap(){
+
+  map =
+    L.map("map").setView(
+      [11.0168,76.9558],
+      7
+    );
+
+
+  L.tileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+      attribution:
+        "&copy; OpenStreetMap contributors"
+    }
+  ).addTo(map);
+
+}
+
+
+
+function getLiveLocation(){
+
+  if(!navigator.geolocation){
+
+    document.getElementById(
+      "locationStatus"
+    ).innerText =
+      "Geolocation is not supported.";
+
+    return;
+  }
+
+
+  document.getElementById(
+    "locationStatus"
+  ).innerText =
+    "Getting your live location...";
+
+
+  navigator.geolocation.getCurrentPosition(
+
+    function(position){
+
+      let lat =
+        position.coords.latitude;
+
+      let lon =
+        position.coords.longitude;
+
+
+      currentLocation = [
+        lat,
+        lon
+      ];
+
+
+      document.getElementById(
+        "locationStatus"
+      ).innerHTML =
+
+        "<b>📍 Current Location</b>" +
+
+        "<br>Latitude: " +
+        lat +
+
+        "<br>Longitude: " +
+        lon;
+
+
+      if(locationMarker){
+
+        map.removeLayer(
+          locationMarker
+        );
+
+      }
+
+
+      locationMarker =
+        L.marker([
+          lat,
+          lon
+        ])
+        .addTo(map)
+        .bindPopup(
+          "📍 You are here"
+        )
+        .openPopup();
+
+
+      map.setView(
+        [lat,lon],
+        14
+      );
+
+    },
+
+
+    function(){
+
+      document.getElementById(
+        "locationStatus"
+      ).innerText =
+        "Unable to get location. Please allow location permission.";
+
+    },
+
+    {
+      enableHighAccuracy:true,
+
+      timeout:10000,
+
+      maximumAge:0
+
+    }
+
+  );
+
+}
+
+
+
+/* =====================================
+   ROUTE MAP
+===================================== */
+
+async function showRouteOnMap(){
+
+  if(routePlaces.length < 2){
+
+    alert(
+      "Please add at least 2 route places."
+    );
+
+    return;
+  }
+
+
+  try{
+
+    let coordinates = [];
+
+
+    for(
+      let i = 0;
+      i < routePlaces.length;
+      i++
+    ){
+
+      let response =
+        await fetch(
+          "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" +
+          encodeURIComponent(
+            routePlaces[i]
+          )
+        );
+
+
+      let data =
+        await response.json();
+
+
+      if(!data.length){
+
+        alert(
+          "Could not find: " +
+          routePlaces[i]
+        );
+
+        return;
+      }
+
+
+      coordinates.push({
+
+        lat:
+          parseFloat(data[0].lat),
+
+        lon:
+          parseFloat(data[0].lon)
+
+      });
+
+    }
+
+
+    let points =
+      coordinates
+      .map(function(point){
+
+        return point.lon +
+          "," +
+          point.lat;
+
+      })
+      .join(";");
+
+
+    let routeResponse =
+      await fetch(
+        "https://router.project-osrm.org/route/v1/driving/" +
+        points +
+        "?overview=full&geometries=geojson"
+      );
+
+
+    let routeData =
+      await routeResponse.json();
+
+
+    if(
+      routeData.code !== "Ok"
+    ){
+
+      alert(
+        "Could not create route."
+      );
+
+      return;
+    }
+
+
+    if(routeLine){
+
+      map.removeLayer(
+        routeLine
+      );
+
+    }
+
+
+    routeLine =
+      L.geoJSON(
+        routeData.routes[0].geometry
+      ).addTo(map);
+
+
+    map.fitBounds(
+      routeLine.getBounds()
+    );
+
+
+    L.popup()
+      .setLatLng(
+        coordinates[0].lat,
+        coordinates[0].lon
+      );
+
+
+  }
+  catch(error){
+
+    console.error(error);
+
+    alert(
+      "Unable to load route map. Please check your internet connection."
+    );
+
+  }
+
+}
+
+
+
+/* =====================================
+   START APP
+===================================== */
+
+displayRoute();
+
+initializeMap();
+
+</script>
+
+
+</body>
+</html>
